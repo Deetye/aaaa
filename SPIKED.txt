@@ -1,0 +1,125 @@
+local wishlist = { "BOOM JUMP", "MINUS TEMPO", "POWERFUL" } -- Desired weapons
+local rolling = true -- Control variable
+
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local teleportService = game:GetService("TeleportService")
+local players = game:GetService("Players")
+local localPlayer = players.LocalPlayer
+
+local rollFunction = replicatedStorage:WaitForChild("Remotes", 9e9)
+    :WaitForChild("Functions", 9e9)
+    :WaitForChild("Roll", 9e9)
+
+local keybindFunction = replicatedStorage:WaitForChild("Remotes", 9e9)
+    :WaitForChild("Functions", 9e9)
+    :WaitForChild("Keybind", 9e9)
+
+local redeemCodeFunction = replicatedStorage:WaitForChild("Remotes")
+    :WaitForChild("Functions")
+    :WaitForChild("Codes") -- Using your specified path
+
+-- Webhook URL (Replace this with your Discord webhook link)
+local webhookURL = ""
+
+-- List of available codes
+local codes = { "BEACH", "UPDATE2", "10KSUBS", "HOTFIX1", "VALENTINESDAY" }
+
+print("🔄 Redeeming codes first...")
+
+-- Function to send notification to Discord webhook
+local function sendWebhook(weaponName)
+    local request = syn and syn.request or request or http and http.request
+    if request then
+        request({
+            Url = webhookURL,
+            Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = game:GetService("HttpService"):JSONEncode({
+                content = "**🎉 Wishlist Weapon Obtained!**\nWeapon: `" .. weaponName .. "`"
+            })
+        })
+        print("📤 Webhook sent for:", weaponName)
+    else
+        print("⚠️ Webhook function not supported in this executor.")
+    end
+end
+
+-- Function to redeem codes before rolling
+local function redeemCodes()
+    for _, code in pairs(codes) do
+        local args = { [1] = code }
+        local success, response = pcall(function()
+            return redeemCodeFunction:InvokeServer(unpack(args))
+        end)
+
+        if success then
+            print("✅ Redeemed code:", code)
+        else
+            print("❌ Failed to redeem code:", code, response)
+        end
+
+        task.wait(0.1) -- Faster redemption
+    end
+end
+
+-- Function to check if a weapon is in the wishlist
+local function isWishlistWeapon(weapon)
+    if not weapon then return false end
+    weapon = weapon:lower():gsub("%s+", "") -- Normalize weapon name
+
+    for _, w in pairs(wishlist) do
+        local clean_w = w:lower():gsub("%s+", "")
+        if string.find(weapon, clean_w, 1, true) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Function to roll continuously (FAST)
+local function rollWeapon()
+    while rolling do
+        local args = { [1] = "WEAPON_2" }
+        local success, result = pcall(function()
+            return rollFunction:InvokeServer(unpack(args)) -- Roll the weapon
+        end)
+
+        if success then
+            if result then
+                local weaponName = tostring(result)
+                print("✅ You received:", weaponName)
+
+                -- Check if the received weapon is in the wishlist
+                if isWishlistWeapon(weaponName) then
+                    print("🎉 Wishlist weapon obtained! Stopping rolls.")
+                    sendWebhook(weaponName) -- Send webhook notification
+                    rolling = false -- Stop rolling
+                    return
+                end
+            else
+                print("⚠️ Roll returned nil. Possibly out of spins.")
+                break
+            end
+        else
+            print("❌ Error rolling weapon:", result) -- Prints error message
+            break
+        end
+
+        task.wait(0.1) -- **Faster roll delay**
+    end
+
+    print("❌ No more spins! Rejoining...")
+
+    -- Execute "DIVE" script only if we DID NOT get a wishlist weapon
+    local diveArgs = { [1] = "DIVE", [2] = "Q\255" }
+    keybindFunction:InvokeServer(unpack(diveArgs))
+
+    print("🔄 Rejoining in 2 seconds...")
+    task.wait(2) -- Wait before rejoining
+
+    teleportService:Teleport(game.PlaceId, localPlayer) -- Rejoin the same game
+end
+
+-- **Process Flow**
+redeemCodes() -- First, redeem codes
+rollWeapon() -- Then, start rolling
