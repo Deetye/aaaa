@@ -1,4 +1,4 @@
-local wishlist = { "BOOM JUMP", "MINUS TEMPO", "POWERFUL" } -- Desired weapons
+local wishlist = { "BOOM JUMP", "MINUS TEMPO",  } -- Desired weapons
 local rolling = true -- Control variable
 
 local replicatedStorage = game:GetService("ReplicatedStorage")
